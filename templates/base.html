@@ -1,0 +1,870 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>LUCENT ~ A Free Online Lithophane Designer</title>
+  <!--  Simple reset to delete the margins  -->
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+  <style>
+	body{
+		--main-color:#aa0000;
+		--label-color:#770000;
+		--white-text:#ffffff;
+		--option-label-color:#990000;
+		--border-color:#aa0000;
+		--hover-color:#aa0011;var(--hover-color);
+	}
+    *{box-sizing:border-box; margin:0 0; padding:0 0;font-size:1rem;}
+    body {width:100%; height:100%;display:flex;flex-direction:row;
+	position:relative;background-color:black;}
+    
+	.canvas_container{width:70%; height:100%;position:relative;}
+	#modelCanvas{width:100%; height:100%;position:absolute;}
+	
+    #imageCanvas{width:100%; height:40%; border:solid 3px black;border:solid 3px var(--border-color);}
+    #settings{width:100%; height:60%; background-color:var(--main-color); border:solid 3px var(--border-color);;
+              overflow-y:auto;overflow-x:hidden;}
+    .settings_input{width:100%;padding:0px;margin:3px;display:block;}
+    .container{display:flex;flex-direction:column;width:30%;height:100%;}
+    label{width:100%;padding:2px;color:var(--white-text);background-color:var(--label-color);margin:1px;display:block;text-align:center;}
+	
+	
+    .option_label{margin:1px;display:inline-block;text-align:left;width:20%;var(--option-label-color);}
+	.import_button{font-size:30px;}
+	.import_button:hover{background-color:var(--hover-color);}
+	 
+    .value{color:white;}
+    .value_label{color:white;}
+    .slider_container{display:flex;justify-content:flex-start;}
+    .slider{width:50%;}
+    .change_imprint_depth{width:100%;}
+    select{width:100%;}
+    form{width:100%;}
+    .stats{display:none;width:100%;height:50px;position:absolute;top:0%;right:0%;background-color:rgba(255,255,255,0);}
+    .stats_name{font-size:10px;}
+    .stats_value{font-size:10px;}
+	
+    @media screen and (max-width: 600px) {
+	.canvas_container{width:100%;}
+    body{display:flex; flex-direction:column;}
+    #modelCanvas{width:100%; height:100%;}
+    <!--#imageCanvas{width:50px; height:50px; position:absolute;top:0%;right:0%;}
+    -->#settings{width:100%; height:100%;}
+	.container{display:flex;flex-direction:column;width:100%;height:50%;}
+    }
+    .spinner {
+        display:none; position: absolute; left:calc(50% - 60px);top: calc(45% - 60px);
+        z-index:10; border: 16px solid #f3f3f3;border-top: 16px solid #990000;border-radius: 50%;
+        width: 120px; height: 120px; animation: spin 2s linear infinite;
+    }
+	
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+	
+	.collapsible_button{border:none;width:100%;padding:5px;color:var(--white-text);background-color:var(--label-color);margin:1px;display:block;text-align:left;}
+	.collapsible_button:hover{background-color:var(--hover-color);}
+	.button_content {padding: 0px;overflow: hidden; max-height:0; transition: max-height 0.2s ease-out;}
+	.toggle_content {padding-left: 5px;display: none;overflow: hidden;}
+	.sub_menu_content {padding-left: 5px;display: none;overflow: hidden;}
+	
+	.floating_button{
+	position:absolute;
+	left:15px;
+	bottom:15px;
+	font-size:1rem;
+	bottom:10px;
+	background-color:red;
+	color:white;
+    cursor: pointer;
+    overflow: hidden;
+    outline: none;
+	padding:10px;
+	margin:0px 0px 20px 20px;
+	z-index:3;
+	}
+	
+	.reset_camera{
+	position:absolute;
+	right:15px;
+	bottom:15px;
+	font-size:1rem;
+	bottom:10px;
+	background-color:black;
+	color:white;
+	border:1px solid #333333;
+    cursor: pointer;
+    outline: none;
+	padding:10px;
+	margin:0px 0px 20px 20px;
+	z-index:3;
+	}
+	
+	.sd{
+	position:absolute;
+	font-size:1rem;
+	top:15px;
+	left:15px;
+	color:red;
+	font-size:1rem;
+	padding:10px;
+	text-decoration:none;
+	z-index:3;
+	}
+	
+	.sd:hover{color:white;}
+	.floating_button:hover{background-color:white;
+	 border-color:red;color:red;}
+	
+	
+	input[type=range]{
+    -webkit-appearance: none;
+}
+
+	input[type="range"]::-webkit-slider-runnable-track {
+	 background: #220011;
+	 height: 20px;
+     width: 20px;
+	}
+
+	input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    border: none;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #880000;
+}
+	
+	 #settings::-webkit-scrollbar {
+	width: 12px;               /* width of the entire scrollbar */
+}
+
+ #settings::-webkit-scrollbar-track {
+  background:  #220000;       /* color of the tracking area */
+}
+
+ #settings::-webkit-scrollbar-thumb {
+  background-color: #990000;    /* color of the scroll thumb */
+  border-radius: 20px;       /* roundness of the scroll thumb */
+  /*border: 3px solid red;   creates padding around scroll thumb */
+}  
+ 
+   .mouse_canvas{
+		position:absolute;z-index:2;width:100%; height:100%;}
+   }
+ 
+  </style>
+
+  <!--  Three.js CDN  -->
+  
+	<script src="./static/scripts/three.js"></script>
+	<!-- <script src="./static/scripts/three.js"></script> -->
+	<script src="./static/scripts/OrbitControls.js"></script>
+	<script src="./static/scripts/BufferGeometryUtils.js"></script>
+	
+	<script src="./static/scripts/STLLoader.js"></script>
+	<script src="./static/scripts/OBJLoader.js"></script>
+	<script src="./static/scripts/GLTFLoader.js"></script>
+	
+	<script src="./static/scripts/STLExporter.js"></script>
+	<script src="./static/scripts/OBJExporter.js"></script>
+	<script src="./static/scripts/GLTFExporter.js"></script>
+	<script src="./static/scripts/bender.js"></script>
+	<script src="./static/scripts/FileSaver.min.js"></script>
+	<!--
+	<script src="./static/scripts/common.js"></script>
+	<script src="./static/scripts/demo.js"></script>
+	
+	
+	-->
+	<!-- https://jsfiddle.net/mne6ysbp/1/ -->
+	<!-- <script src="./static/scripts/subdivisionModifier2.js"></script>-->
+	<script src="./static/scripts/three-csg.js"></script>
+	<script src="./static/scripts/frame_class.js"></script>
+	<script src="./static/scripts/model_class.js"></script>
+	<script src="./static/scripts/world_class.js"></script>
+	
+	<script src="./static/scripts/lithophane_demo.js"></script>
+	
+	
+
+</head>
+<body>
+
+
+
+
+<div class="canvas_container">
+	<div class="spinner" id="spinner"></div>
+	<a href="{{ url_for('index') }}" class="sd" >HOME</a>
+	<button class="floating_button" id="download_stl">
+		DOWNLOAD STL
+	</button>
+	<button class="reset_camera" id="reset_camera">
+		Reset Camera
+	</button>
+	<div id="modelCanvas"></div>
+	<canvas id="mouse_canvas" class="mouse_canvas"><canvas>
+	<!-- <div class="sd" >SD: <span id="sd"></span></div> -->
+	
+	
+	
+</div>
+
+<script type="text/javascript">
+
+
+window.onload = function() {
+   // init("modelCanvas");
+  
+   lithophaneDemoInit();
+   
+  // second_demo_init("modelCanvas");
+  // console.log("window loaded");
+}
+</script>
+
+<div class="container">
+    <canvas id="imageCanvas" width="1000" height="1000"></canvas>
+    <div id="settings">
+        <form>
+           
+        <div class="settings_input">
+		
+            <label for="import_logo" class="import_button">Import Image</label>
+            <input type="file" id="import_logo" style="display:none;" name="import_logo">
+		</div>
+		
+		<div class="settings_input">
+			<button class="collapsible_button" >+ Grey Scaling</button>
+			
+			<!-- Grey Scale Menu Content -->
+			<div class="button_content">
+				<select id="change_grey_scale_method" name="change_model" data-menu_name="grey_scale_menu">
+					<option data-sub_menu_name="sub_menu_color" selected >Color</option>
+					<option data-sub_menu_name="sub_menu_averaging">Averaging</option>
+					<option data-sub_menu_name="sub_menu_luminance">Luminance</option>
+					<option data-sub_menu_name="sub_menu_bw">Black & White</option>
+				</select>
+			<!-- End -->
+			
+				<!-- grey scale sub menu contennt -->
+				
+				<!-- Sub Menu For Luminance -->
+				<div class="grey_scale_menu sub_menu_content sub_menu_luminance">
+					<label class="option_label"  for="change_red">Red</label>
+					<input type="range" class="slider canvas_slider"  id="change_red"
+					data-span_id="change_red_value" data-setting="red" name="change_red"
+					min="0" max="1" value="0.5" step="0.01">
+					<span class="value_label">R: </span><span class="value", id="change_red_value" >0</span><br>
+				</div>
+					
+				<div class="grey_scale_menu sub_menu_content sub_menu_luminance">
+					<label class="option_label"  for="change_green">Green</label>
+					<input type="range" class="slider canvas_slider"  id="change_green"
+					data-span_id="change_green_value" data-setting="green" name="change_green"
+					min="0" max="1" value="0.5" step="0.01">
+					<span class="value_label">G: </span><span class="value", id="change_green_value" >0</span><br>
+				</div>
+				
+				<div class="grey_scale_menu sub_menu_content sub_menu_luminance">
+					<label class="option_label"  for="change_blue">Blue</label>
+					<input type="range" class="slider canvas_slider"  id="change_blue"
+					data-span_id="change_blue_value" data-setting="blue" name="change_blue"
+					min="0" max="1" value="0.5" step="0.01">
+					<span class="value_label">B: </span><span class="value", id="change_blue_value">0</span><br>
+				</div>
+				<!-- End -->
+				
+				<!-- Sub Menu For Black and White -->
+				<div class="grey_scale_menu sub_menu_content sub_menu_bw">
+					<label class="option_label"  for="change_threshhold">Threshhold</label>
+					<input type="range" class="slider canvas_slider"  id="change_threshhold"
+					data-span_id="change_threshhold_value" data-setting="threshhold" name="change_threshhold"
+					min="0" max="255" value="125" step="1">
+					<span class="value_label">R: </span><span class="value", id="change_threshhold_value">0</span><br>
+				</div>
+					
+				<div class="grey_scale_menu sub_menu_content sub_menu_bw">
+					<label class="option_label"  for="change_black">Black</label>
+					<input type="range" class="slider canvas_slider"  id="change_black"
+					data-span_id="change_black_value" data-setting="black" name="change_black"
+					min="0" max="1" value="0.5" step="0.01">
+					<span class="value_label">*: </span><span class="value", id="change_black_value">0</span><br>
+				</div>
+				
+				<div class="grey_scale_menu sub_menu_content sub_menu_bw">
+					<label class="option_label"  for="change_white">White</label>
+					<input type="range" class="slider canvas_slider"  id="change_white"
+					data-span_id="change_white_value" data-setting="white" name="change_white"
+					min="0" max="1" value="0.5" step="0.01">
+					<span class="value_label">*: </span><span class="value", id="change_white_value" >0</span><br>
+				</div>
+				<!-- End --> 
+				
+				<!-- Sub Menu For Averaging -->
+				<div class="grey_scale_menu sub_menu_content sub_menu_averaging sub_menu_luminance sub_menu_bw">
+					<label class="option_label"  for="change_bg_intensity">Bg Intensity</label>
+					<input type="range" class="slider canvas_slider"  id="change_bg_intensity"
+					data-span_id="change_bg_intensity_value" data-setting="bg_intensity" name="change_bg_intensity"
+					min="0" max="100" value="50" step="1">
+					<span class="value_label">%: </span><span class="value" id="change_bg_intensity_value" >0</span><br>
+				</div>
+				<!-- End -->
+				
+				<!-- end of sub menu content -->
+			</div>
+		</div>
+
+
+		<div class="settings_input">
+			<button class="collapsible_button" >+ Post Processing</button>
+			<!-- Image Editor -->
+			<div class="button_content">
+				<label class="option_label"  for="change_brightness">Brightness</label>
+				<input type="range" class="slider canvas_slider"  id="change_brightness"
+				data-span_id="change_brightness_value" data-setting="brightness" name="change_brightness"
+				min="0" max="250" value="100" step="1">
+				<span class="value_label">%: </span><span class="value", id="change_brightness_value" >0</span><br>
+					
+				<label class="option_label"  for="change_contrast">Contrast</label>
+				<input type="range" class="slider canvas_slider"  id="change_contrast"
+				data-span_id="change_contrast_value" data-setting="contrast" name="change_contrast"
+				min="0" max="250" value="100" step="1">
+				<span class="value_label">%: </span><span class="value", id="change_contrast_value" >0</span><br>
+					
+				<label class="option_label"  for="change_exposure">Exposure</label>
+				<input type="range" class="slider canvas_slider"  id="change_exposure"
+				data-span_id="change_exposure_value" data-setting="exposure" name="change_exposure"
+				min="0" max="250" value="100" step="1">
+				<span class="value_label">%: </span><span class="value", id="change_exposure_value" >0</span><br>
+					
+				<label class="option_label"  for="change_blur">Blur</label>
+				<input type="range" class="slider canvas_slider"  id="change_blur"
+				data-span_id="change_blur_value" data-setting="blur" name="change_blur"
+				min="1" max="50" value="0" step="1">
+				<span class="value_label">px: </span><span class="value", id="change_blur_value" >0</span><br>
+			</div>
+			<!-- End -->
+		</div>
+		
+		<div class="settings_input">
+			<button class="collapsible_button" >+ Transformations</button>
+			<!-- Image Editor -->
+			<div class="button_content">
+<!--
+				<label class="option_label"  for="change_crop_width">Crop Width</label>
+				<input type="range" class="slider canvas_slider"  id="change_crop_width"
+				data-span_id="change_crop_width_value" data-setting="crop_width" name="change_crop_width"
+				min="0" max="1000" value="500" step="1">
+				<span>px: </span><span class="value", id="change_crop_width_value" >0</span><br>
+					
+				<label class="option_label"  for="change_crop_height">Crop Height</label>
+				<input type="range" class="slider canvas_slider"  id="change_crop_height"
+				data-span_id="change_crop_height_value" data-setting="crop_height" name="change_crop_height"
+				min="0" max="1000" value="500" step="1">
+				<span>px: </span><span class="value", id="change_crop_height_value" >0</span><br>
+					-->
+				<label class="option_label"  for="change_positive">Positive</label>
+				<input type="checkbox" class="checkbox canvas_checkbox"  id="change_positive"
+				data-span_id="change_positive_value" data-setting="flip" 
+				name="change_flip"><br>
+				
+				<label class="option_label"  for="change_mirror">Mirror</label>
+				<input type="checkbox" class="checkbox canvas_checkbox" id="change_mirror"
+				data-span_id="change_mirror_value" data-setting="mirror" 
+				name="change_mirror"><br>
+				
+				<label class="option_label"  for="change_flip">Flip</label>
+				<input type="checkbox" class="checkbox canvas_checkbox"  id="change_flip"
+				data-span_id="change_flip_value" data-setting="flip" 
+				name="change_flip"><br>
+				
+				</div>
+			<!-- End -->
+		</div>
+		
+		<div class="settings_input">
+			<button class="collapsible_button" >+ On Model</button>
+			<!-- Image On Model -->
+			<div class="button_content">
+				
+				<div class="settings_input">
+				  <label class="option_label"  for="change_shift_x">Shift X</label>
+				  <input type="range" class="slider canvas_slider"  id="change_shift_x"
+				  data-span_id="change_shift_x_value" data-setting="shift_x" name="change_shift_x"
+				  min="0" max="1000" value="500" step="1">
+				  <span class="value_label">px: </span><span class="value", id="change_shift_x_value" >0</span><br>
+				</div>
+
+				<div class="settings_input">
+				  <label class="option_label" for="change_shift_y">Shift Y</label>
+				  <input type="range" class="slider canvas_slider"  id="change_shift_y"
+				  data-span_id="change_shift_y_value" data-setting="shift_y" name="change_shift_y"
+				  min="0" max="1000" value="500" step="1">
+				  <span class="value_label">px: </span><span class="value", id="change_shift_y_value" >0</span><br>
+				</div>
+
+				<div class="settings_input">
+				  <label class="option_label" for="change_rotation">Angle </label>
+				  <input type="range" class="slider canvas_slider"  id="change_rotation"
+				  data-span_id="change_rotation_value" data-setting="rotation" name="change_rotation"
+				  min="0" max="360" value="180" step="1">
+				  <span  class="value_label">Degs: </span><span class="value", id="change_rotation_value" >0</span><br>
+				</div>
+
+				<div class="settings_input">
+				  <label class="option_label" for="change_scale">Scale  </label>
+				  <input type="range" class="slider canvas_slider"  id="change_scale"
+				  data-span_id="change_scale_value" data-setting="scale" name="change_scale" min="0"
+				  max="2" value="1" step="0.01">
+				  <span class="value_label">X: </span><span class="value", id="change_scale_value" >0</span><br>
+				</div>
+
+				<div class="settings_input">
+				  <label class="option_label" for="change_scale_x">Scale X</label>
+				  <input type="range" class="slider canvas_slider"  id="change_scale_x"
+				  data-span_id="change_scale_x_value" data-setting="scale_x" name="change_scale_x" min="0"
+				  max="2" value="1" step="0.01">
+				  <span class="value_label">X: </span><span class="value", id="change_scale_x_value" >0</span><br>
+				</div>
+
+				<div class="settings_input">
+				  <label class="option_label" for="change_scale_y">Scale Y</label>
+				  <input type="range" class="slider canvas_slider"  id="change_scale_y"
+				  data-span_id="change_scale_y_value" data-setting="scale_y" name="change_scale_y" min="0"
+				  max="2" value="1" step="0.01">
+				  <span class="value_label">X: </span><span class="value", id="change_scale_y_value" >0</span><br>
+				</div>
+		
+				
+			</div>
+			<!-- End -->
+		</div>
+		
+		
+		<div class="settings_input">
+        <button class="collapsible_button" >+ Shape Options</button>
+		<div class="button_content">
+		<select id="change_shape_menu" name="change_shape_menu" data-menu_name="shape_menu">
+		<!-- <option data-sub_menu_name="none" value="none"  >None Selected</option>  -->
+		<option data-sub_menu_name="plane" value="plane" selected>Plane</option>
+		<!-- <option data-sub_menu_name="cylinder" value="cylinder">Cylinder</option>
+		<option data-sub_menu_name="sphere" value="sphere">Sphere</option>
+     	<option data-sub_menu_name="arc" value="arc">Arc</option> -->
+		</select>
+                        <div class="shape_menu sub_menu_content plane cylinder arc">
+                        <label class="option_label"  for="change_height">Height</label>
+                        <input type="range" class="slider canvas_slider"  id="change_height"
+                        data-span_id="change_height_value" data-setting="height" name="change_height"
+                        min="10" max="200" value="60" step="1">
+                        <span class="value_label">mm: </span><span class="value", id="change_height_value" >5</span><br>
+                        </div>
+						
+                        <div class="shape_menu sub_menu_content plane arc">
+                        <label class="option_label"  for="change_width">Width</label>
+                        <input type="range" class="slider canvas_slider"  id="change_width"
+                        data-span_id="change_width_value" data-setting="width" name="change_width"
+                        min="10" max="200" value="100" step="1">
+                        <span class="value_label">mm: </span><span class="value", id="change_width_value" >5</span><br>
+                        </div>
+						<!--
+                        <div class="shape_menu sub_menu_content cylinder sphere">
+                        <label class="option_label"  for="change_diameter">Diameter</label>
+                        <input type="range" class="slider canvas_slider"  id="change_diameter"
+                        data-span_id="change_diameter_value" data-setting="diameter" name="change_diameter"
+                        min="0" max="10" value="5" step="0.1">
+                        <span>R: </span><span class="value", id="change_diameter_value" >5</span><br>
+                        </div> -->
+                        <div class="shape_menu sub_menu_content cylinder">
+                        <label class="option_label"  for="change_slant_angle">Slant Angle</label>
+                        <input type="range" class="slider canvas_slider"  id="change_slant_angle"
+                        data-span_id="change_slant_angle_value" data-setting="slant_angle" name="change_slant_angle"
+                        min="0" max="360" value="0" step="0.1">
+                        <span class="value_label">deg: </span><span class="value", id="change_slant_angle_value" >0</span><br>
+                        </div>
+						<!--
+                        <div class="shape_menu sub_menu_content arc cylinder">
+                        <label class="option_label"  for="change_arc_angle">Arc Angle</label>
+                        <input type="range" class="slider canvas_slider"  id="change_arc_angle"
+                        data-span_id="change_arc_angle_value" data-setting="arc_angle" name="change_arc_angle"
+                        min="0" max="1" value="0" step="0.01">
+                        <span>R: </span><span class="value", id="change_arc_angle_value" >5</span><br>
+                        </div>
+						
+                        <div class="shape_menu sub_menu_content cylinder">
+                        <label class="option_label"  for="change_cylinder_top">Cylinder Top</label>
+                        <input type="range" class="slider canvas_slider"  id="change_cylinder_top"
+                        data-span_id="change_cylinder_top_value" data-setting="cylinder_top" name="change_cylinder_top"
+                        min="1" max="10" value="9" step="0.1">
+                        <span>R: </span><span class="value" id="change_cylinder_top_value" >5</span><br>
+                        </div>
+                        <div class="shape_menu sub_menu_content cylinder">
+                        <label class="option_label"  for="change_cylinder_bottom">Cylinder Bottom</label>
+                        <input type="range" class="slider canvas_slider"  id="change_cylinder_bottom"
+                        data-span_id="change_cylinder_bottom_value" data-setting="cylinder_bottom" name="change_cylinder_bottom"
+                        min="1" max="10" value="5" step="0.1">
+                        <span>R: </span><span class="value" id="change_cylinder_bottom_value" >5</span><br>
+                        </div>-->
+                        <div class="shape_menu sub_menu_content plane cylinder sphere arc">
+                        <label class="option_label"  for="change_max_thick">Max Thick</label>
+                        <input type="range" class="slider canvas_slider"  id="change_max_thick"
+                        data-span_id="change_max_thick_value" data-setting="max_thick" name="change_max_thick"
+                        min="0.2" max="3.5" value="2" step="0.05">
+                        <span class="value_label">mm: </span><span class="value" id="change_max_thick_value"> 2.</span><br>
+                        </div>
+                        <div class="shape_menu sub_menu_content plane cylinder sphere arc">
+                        <label class="option_label"  for="change_min_thick">Min Thick</label>
+                        <input type="range" class="slider canvas_slider"  id="change_min_thick"
+                        data-span_id="change_min_thick_value" data-setting="min_thick" name="change_min_thick"
+                        min="0.1" max="0.8" value="0.1" step="0.05">
+                        <span class="value_label">mm: </span><span class="value", id="change_min_thick_value" >0.1</span><br>
+                        </div>
+						<!--
+                <div class="shape_menu sub_menu_content plane cylinder sphere arc">
+				<label class="option_label" for="change_shape_crop">Crop Shape</label>
+				<input class="toggle" type="checkbox" id="change_shape_crop"
+				data-span_id="change_shape_crop_value" data-setting="shape_crop"
+				name="change_shape_crop"><br>
+				</div>
+
+				
+			    <div class="shape_menu sub_menu_content plane cylinder sphere arc">
+				<label class="option_label" for="change_inside">Inside</label>
+				<input class="toggle" type="checkbox" id="change_inside"
+				data-span_id="change_inside_value" data-setting="inside"
+				name="change_inside"><br>
+				</div>
+                -->
+			
+			</div>
+		</div>
+
+
+<!-- Frame Options -->
+<div class="settings_input">
+<button class="collapsible_button" >+ Frame Options</button>
+<div class="button_content">
+<select id="change_frame_options" name="change_frame_options" data-menu_name="frame_options">
+
+<option selected disabled>Frame Options</option>
+<option data-sub_menu_name="no_frame" value="none">No frame</option>
+<option data-sub_menu_name="frame" value="frame">Frame</option>
+<!--<option data-sub_menu_name="border">Border</option> -->
+</select>
+
+        <div class="frame_options sub_menu_content frame border">
+        <label class="option_label"  for="change_frame_border_thickness_x">X Borders</label>
+        <input type="range" class="slider canvas_slider"  id="change_frame_border_thickness_x"
+        data-span_id="change_frame_border_thickness_x_value" data-setting="frame_border_thickness_x" name="change_frame_border_thickness"
+        min="0" max="1" value="1" step="0.01">
+        <span class="value_label">R: </span><span class="value", id="change_frame_border_thickness_x_value" >1</span><br>
+        </div>
+		
+		<div class="frame_options sub_menu_content frame border">
+        <label class="option_label"  for="change_frame_border_thickness_y">Y Borders</label>
+        <input type="range" class="slider canvas_slider"  id="change_frame_border_thickness_y"
+        data-span_id="change_frame_border_thickness_y_value" data-setting="frame_border_thickness_y" name="change_frame_border_thickness_y"
+        min="0" max="1" value="1" step="0.01">
+        <span class="value_label">R: </span><span class="value", id="change_frame_border_thickness_y_value" >1</span><br>
+        </div>
+		
+		
+        <div class="frame_options sub_menu_content frame border">
+        <label class="option_label"  for="change_frame_depth">Frame Height</label>
+        <input type="range" class="slider canvas_slider"  id="change_frame_depth"
+        data-span_id="change_frame_depth_value" data-setting="frame_depth" name="change_frame_depth"
+        min="0" max="6" value="1" step="0.05">
+        <span class="value_label">R: </span><span class="value", id="change_frame_depth_value" >1</span><br>
+        </div>
+		
+        <div class="frame_options sub_menu_content frame">
+        <label class="option_label"  for="change_frame_angle">Angle</label>
+        <input type="range" class="slider canvas_slider"  id="change_frame_angle"
+        data-span_id="change_frame_angle_value" data-setting="frame_angle" name="change_frame_angle"
+        min="0" max="20" value="16" step="1">
+        <span class="value_label">R: </span><span class="value", id="change_frame_angle_value" >50</span><br>
+        </div>
+		
+		<div class="frame_options sub_menu_content frame border">
+		<label class="option_label" for="change_advanced_frame_options">Advanced</label>
+		<input class="toggle" type="checkbox" id="change_advanced_frame_options"
+		data-span_id="change_advanced_frame_options_value" data-setting="advanced_frame_options"
+		name="change_advanced_frame_options"><br>
+		</div>
+				
+
+</div>
+</
+
+>
+<!-- Quality Options -->
+<div class="settings_input">
+<button class="collapsible_button" >+ Quality Options</button>
+<div class="button_content">
+      <!--  <div class="settings_input">
+        <label class="option_label"  for="change_mm_per_pixel">Mm Per Pixel</label>
+        <input type="range" class="slider canvas_slider"  id="change_mm_per_pixel"
+        data-span_id="change_mm_per_pixel_value" data-setting="mm_per_pixel" name="change_mm_per_pixel"
+        min="0" max="100" value="50" step="1">
+        <span>M: </span><span class="value", id="change_mm_per_pixel_value" >50</span><br>
+                                </div> -->
+        <div class="settings_input">
+        <label class="option_label"  for="change_preview_model">Preview Model</label>
+        <input type="range" class="slider canvas_slider"  id="change_preview_model"
+        data-span_id="change_preview_model_value" data-setting="preview_model" name="change_preview_model"
+        min="1" max="8" value="3" step="1">
+        <span class="value_label">00s: </span><span class="value", id="change_preview_model_value" >50</span><br>
+                                </div>
+        </div>
+</div>
+
+
+
+
+
+
+<div class="settings_input">
+<button class="collapsible_button" >+ Display Options</button>
+<div class="button_content">
+<select id="change_display_options" name="change_display_options" data-menu_name="display_options">
+
+<option selected disabled>Display Options</option>
+<option data-sub_menu_name="no_light">No light</option>
+<option data-sub_menu_name="back_lit">Back lit</option>
+<option data-sub_menu_name="checker">Checker</option>
+<option data-sub_menu_name="normals">Normals</option>
+<option data-sub_menu_name="wireframe">Wireframe</option>
+</select>
+<div class="display_options sub_menu_content no_light back_lit wireframe">
+<label class="option_label" for="change_material_color">Material Color</label>
+<input class="color" type="color" id="change_material_color" name="change_material_color"
+data-span_id="change_material_color_value" data-setting="material_color" value="#ff0000"><br>
+</div>
+<div class="display_options sub_menu_content back_lit checker normals wireframe">
+<label class="option_label" for="change_light_color">Light Color</label>
+<input class="color" type="color" id="change_light_color" name="change_light_color" 
+data-span_id="change_light_color_value" data-setting="light_color" value="#ff0000"><br>
+</div>
+<div class="display_options sub_menu_content back_lit checker normals wireframe">
+<label class="option_label"  for="change_light_intensity">Light Intensity</label>
+<input type="range" class="slider canvas_slider"  id="change_light_intensity"
+data-span_id="change_light_intensity_value" data-setting="light_intensity" name="change_light_intensity"
+min="0" max="100" value="50" step="1">
+<span class="value_label">R: </span><span class="value", id="change_light_intensity_value" >50</span><br>
+</div>
+<div class="display_options sub_menu_content no_light back_lit checker normals wireframe">
+<label class="option_label" for="change_auto_update">Auto Update</label>
+<input class="toggle" type="checkbox" id="change_auto_update"
+data-span_id="change_auto_update_value" data-setting="auto_update"
+name="change_auto_update"><br>
+</div>
+</div>
+</div>
+
+
+
+<div class="settings_input">
+<button class="collapsible_button" >+ Attributes</button>
+<div class="button_content">
+<label class="option_label" for="change_enable_lamp">Enable Lamp</label>
+<input type="checkbox" class="collapsible_toggle"  id="change_enable_lamp"
+data-span_id="change_enable_lamp_value" data-setting="enable_lamp"
+name="change_enable_lamp">
+<div class="toggle_content">
+
+<div class="settings_input">
+<label class="option_label"  for="change_holder_distance">Offset Z</label>
+<input type="range" class="slider canvas_slider"  id="change_holder_distance"
+data-span_id="change_holder_distance_value" data-setting="holder_distance" name="change_holder_distance"
+min="0" max="200" value="50" step="1">
+<span class="value_label">mm: </span><span class="value", id="change_holder_distance_value" >50</span><br>
+</div>
+<div class="settings_input">
+<label class="option_label"  for="change_distance_y">Distance Y</label>
+<input type="range" class="slider canvas_slider"  id="change_distance_y"
+data-span_id="change_distance_y_value" data-setting="distance_y" name="change_distance_y"
+min="0" max="100" value="0" step="1">
+<span class="value_label">%: </span><span class="value", id="change_distance_y_value" >0</span><br>
+</div>
+<select id="change_fitter_menu" name="change_fitter_menu" data-menu_name="fitter_menu">
+
+<option selected disabled>Fitter Options</option>
+<option data-sub_menu_name="none" value="none">None</option>
+<option data-sub_menu_name="bulb_fitter" value="bulb_fitter">Bulb fitter</option>
+<!--<option data-sub_menu_name="puck" value="puck">Puck</option>-->
+</select>
+<div class="fitter_menu sub_menu_content puck">
+<label class="option_label"  for="change_light_height">Light Height</label>
+<input type="range" class="slider canvas_slider"  id="change_light_height"
+data-span_id="change_light_height_value" data-setting="light_height" name="change_light_height"
+min="0" max="100" value="25" step="1">
+<span class="value_label">mm: </span><span class="value", id="change_light_height_value" >25</span><br>
+</div>
+<div class="fitter_menu sub_menu_content puck">
+<label class="option_label"  for="change_puck_angle">Puck Angle</label>
+<input type="range" class="slider canvas_slider"  id="change_puck_angle"
+data-span_id="change_puck_angle_value" data-setting="puck_angle" name="change_puck_angle"
+min="0" max="100" value="50" step="1">
+<span class="value_label">R: </span><span class="value", id="change_puck_angle_value" >50</span><br>
+</div>
+<div class="fitter_menu sub_menu_content puck">
+<label class="option_label"  for="change_base_height">Base Height</label>
+<input type="range" class="slider canvas_slider"  id="change_base_height"
+data-span_id="change_base_height_value" data-setting="base_height" name="change_base_height"
+min="0" max="100" value="50" step="1">
+<span class="value_label">R: </span><span class="value", id="change_base_height_value" >50</span><br>
+</div>
+<div class="fitter_menu sub_menu_content puck">
+<label class="option_label"  for="change_cut_position">Cut Position</label>
+<input type="range" class="slider canvas_slider"  id="change_cut_position"
+data-span_id="change_cut_position_value" data-setting="cut_position" name="change_cut_position"
+min="0" max="100" value="50" step="1">
+<span class="value_label">R: </span><span class="value", id="change_cut_position_value" >50</span><br>
+</div>
+<div class="fitter_menu sub_menu_content puck">
+<label class="option_label" for="change_enable_ledge">Enable Ledge</label>
+<input class="toggle" type="checkbox" id="change_enable_ledge"
+data-span_id="change_enable_ledge_value" data-setting="enable_ledge"
+name="change_enable_ledge"><br>
+</div>
+
+<div class="fitter_menu sub_menu_content bulb_fitter">
+<label class="option_label"  for="change_fitter_height">Height</label>
+<input type="range" class="slider canvas_slider"  id="change_fitter_height"
+data-span_id="change_fitter_height_value" data-setting="fitter_height" name="change_fitter_height"
+min="0" max="100" value="10" step="1">
+<span class="value_label">mm: </span><span class="value", id="change_fitter_height_value" >10</span><br>
+</div>
+
+<div class="fitter_menu sub_menu_content bulb_fitter puck">
+<label class="option_label"  for="change_fitter_outer_diameter">Outer Diameter</label>
+<input type="range" class="slider canvas_slider"  id="change_fitter_outer_diameter"
+data-span_id="change_fitter_outer_diameter_value" data-setting="fitter_outer_diameter" 
+name="change_fitter_outer_diameter"
+min="0" max="40" value="10" step="1">
+<span class="value_label">R: </span><span class="value", id="change_fitter_outer_diameter_value" >50</span><br>
+</div>
+
+<div class="fitter_menu sub_menu_content bulb_fitter puck">
+<label class="option_label"  for="change_fitter_inner_diameter">Inner Diameter</label>
+<input type="range" class="slider canvas_slider"  id="change_fitter_inner_diameter"
+data-span_id="change_fitter_inner_diameter_value" data-setting="fitter_inner_diameter" 
+name="change_fitter_inner_diameter"
+min="0" max="40" value="8" step="1">
+<span class="value_label">R: </span><span class="value", id="change_fitter_inner_diameter_value" >50</span><br>
+</div>
+
+<div class="fitter_menu sub_menu_content bulb_fitter puck">
+<label class="option_label"  for="change_fitter_depth">Depth</label>
+<input type="range" class="slider canvas_slider"  id="change_fitter_depth"
+data-span_id="change_fitter_depth_value" data-setting="fitter_depth" name="change_fitter_depth"
+min="0" max="100" value="50" step="1">
+<span class="value_label">%: </span><span class="value", id="change_fitter_depth_value" >50</span><br>
+</div>
+
+<div class="fitter_menu sub_menu_content bulb_fitter puck">
+<label class="option_label"  for="change_fitter_base_diameter">Base Diameter</label>
+<input type="range" class="slider canvas_slider"  id="change_fitter_base_diameter"
+data-span_id="change_fitter_base_diameter_value" data-setting="fitter_base_diameter" name="change_fitter_base_diameter"
+min="0" max="100" value="12" step="1">
+<span class="value_label">R: </span><span class="value", id="change_fitter_base_diameter_value" >20</span><br>
+</div>
+
+<div class="fitter_menu sub_menu_content bulb_fitter puck">
+<label class="option_label"  for="change_fitter_angle">Holder Tilt</label>
+<input type="range" class="slider canvas_slider"  id="change_fitter_angle"
+data-span_id="change_fitter_angle_value" data-setting="fitter_angle" name="change_fitter_angle"
+min="0" max="90" value="0" step="1">
+<span class="value_label">deg: </span><span class="value", id="change_fitter_angle_value" >0</span><br>
+
+</div>
+<select id="change_connector_menu" name="change_connector_menu" data-menu_name="connector_menu">
+
+<option selected disabled>Stand Options</option>
+<option data-sub_menu_name="connectors">Connectors</option>
+</select>
+
+<div class="connector_menu sub_menu_content connectors">
+<label class="option_label"  for="change_connector_num">Connector Num</label>
+<input type="range" class="slider canvas_slider"  id="change_connector_num"
+data-span_id="change_connector_num_value" data-setting="connector_num" name="change_connector_num"
+min="0" max="20" value="5" step="1">
+<span class="value_label">mm: </span><span class="value", id="change_connector_num_value" >5</span><br>
+</div>
+
+<div class="connector_menu sub_menu_content connectors">
+<label class="option_label"  for="change_connector_height">Connector Height</label>
+<input type="range" class="slider canvas_slider"  id="change_connector_height"
+data-span_id="change_connector_height_value" data-setting="connector_height" name="change_connector_height"
+min="0" max="10" value="5" step="1">
+<span class="value_label">mm: </span><span class="value", id="change_connector_height_value" >5</span><br>
+</div>
+
+<div class="connector_menu sub_menu_content connectors">
+<label class="option_label"  for="change_connector_width">Connector Width</label>
+<input type="range" class="slider canvas_slider"  id="change_connector_width"
+data-span_id="change_connector_width_value" data-setting="connector_width" name="change_connector_width"
+min="0" max="10" value="5" step="1">
+<span class="value_label">mm: </span><span class="value", id="change_connector_width_value" >5</span><br>
+</div>
+
+<div class="connector_menu sub_menu_content connectors">
+<label class="option_label"  for="change_connector_max_spread_angle">Connector Angle</label>
+<input type="range" class="slider canvas_slider"  id="change_connector_max_spread_angle"
+data-span_id="change_connector_max_spread_angle_value" data-setting="connector_max_spread_angle" name="change_connector_max_spread_angle"
+min="0" max="100" value="100" step="1">
+<span class="value_label">%: </span><span class="value", id="change_connector_max_spread_angle_value" >100</span><br>
+</div>
+
+</div><br>
+<label class="option_label" for="change_nightlight">Nightlight</label>
+<input type="checkbox" class="collapsible_toggle"  id="change_nightlight"
+data-span_id="change_nightlight_value" data-setting="nightlight"
+name="change_nightlight">
+<div class="toggle_content">
+
+<div class="settings_input">
+<label class="option_label"  for="change_nlight_dist">Nlight Dist</label>
+<input type="range" class="slider canvas_slider"  id="change_nlight_dist"
+data-span_id="change_nlight_dist_value" data-setting="nlight_dist" name="change_nlight_dist"
+min="0" max="100" value="50" step="1">
+<span class="value_label">N: </span><span class="value", id="change_nlight_dist_value" >50</span><br>
+</div>
+
+<div class="settings_input">
+<label class="option_label"  for="change_nlight_width">Nlight Width</label>
+<input type="range" class="slider canvas_slider"  id="change_nlight_width"
+data-span_id="change_nlight_width_value" data-setting="nlight_width" name="change_nlight_width"
+min="0" max="100" value="50" step="1">
+<span class="value_label">N: </span><span class="value", id="change_nlight_width_value" >50</span><br>
+</div>
+
+<div class="settings_input">
+<label class="option_label"  for="change_nlight_depth">Nlight Depth</label>
+<input type="range" class="slider canvas_slider"  id="change_nlight_depth"
+data-span_id="change_nlight_depth_value" data-setting="nlight_depth" name="change_nlight_depth"
+min="0" max="100" value="50" step="1">
+<span class="value_label">N: </span><span class="value", id="change_nlight_depth_value" >50</span><br>
+</div>
+
+<div class="settings_input">
+<label class="option_label"  for="change_nlight_thickness">Nlight Thickness</label>
+<input type="range" class="slider canvas_slider"  id="change_nlight_thickness"
+data-span_id="change_nlight_thickness_value" data-setting="nlight_thickness" name="change_nlight_thickness"
+min="0" max="100" value="50" step="1">
+<span class="value_label">N: </span><span class="value", id="change_nlight_thickness_value" >50</span><br>
+</div>
+
+</div><br>
+</div>
+</div>
+</form>
+</div>
+
+</div>
+
+</body>
+<script src="./static/scripts/collapse.js"></script>
+</html>
